@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSW SMP - Liquid Glass Dashboard</title>
+    <style>
+        /* Modern Reset & Liquid Glass Variables */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+            --blob-1: #4f46e5;
+            --blob-2: #06b6d4;
+            --glass-bg: rgba(15, 23, 42, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-glow: #00ffcc;
+            --accent-glow-rgb: 0, 255, 204;
+            --card-hover-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+            --blob-1: #6366f1;
+            --blob-2: #0ea5e9;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: rgba(15, 23, 42, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent-glow: #4f46e5;
+            --accent-glow-rgb: 79, 70, 229;
+            --card-hover-bg: rgba(255, 255, 255, 0.6);
+            --card-border: rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--text-primary);
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        /* Moving Background Liquid Blobs */
+        .liquid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+            filter: blur(80px);
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.4;
+            mix-blend-mode: multiply;
+            animation: moveBlobs 12s infinite alternate ease-in-out;
+        }
+
+        [data-theme="light"] .blob {
+            opacity: 0.25;
+            mix-blend-mode: normal;
+        }
+
+        .blob-1 {
+            width: 450px;
+            height: 450px;
+            background: var(--blob-1);
+            top: -10%;
+            left: -10%;
+        }
+
+        .blob-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--blob-2);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -6s;
+        }
+
+        @keyframes moveBlobs {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(80px, 50px) scale(1.1); }
+            100% { transform: translate(-40px, -60px) scale(0.9); }
+        }
+
+        /* Glassmorphism Panel style */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(120%);
+            -webkit-backdrop-filter: blur(16px) saturate(120%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+        }
+
+        /* Header Styles */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .nav-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.25rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+            text-shadow: 0 0 10px rgba(var(--accent-glow-rgb), 0.3);
+        }
+
+        .logo span {
+            color: var(--accent-glow);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background: var(--card-hover-bg);
+            box-shadow: 0 0 10px rgba(var(--accent-glow-rgb), 0.2);
+        }
+
+        /* Main Glass Dashboard Container */
+        .main-dashboard {
+            flex: 1;
+            width: 90%;
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .title-area h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        /* Filters & Sort */
+        .sorting-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sorting-controls label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .sort-select {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .sort-select:focus {
+            border-color: var(--accent-glow);
+        }
+
+        .timer-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            background: rgba(var(--accent-glow-rgb), 0.1);
+            border: 1px solid rgba(var(--accent-glow-rgb), 0.2);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .timer-banner span {
+            color: var(--accent-glow);
+            font-weight: 800;
+        }
+
+        /* Responsive Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Glass Player Cards */
+        .player-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .player-card:hover {
+            background: var(--card-hover-bg);
+            border-color: var(--accent-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(var(--accent-glow-rgb), 0.15);
+        }
+
+        .player-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-glow);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .player-card:hover::before {
+            opacity: 1;
+        }
+
+        .player-card h3 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.01em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-card h3::after {
+            content: '▼';
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .player-card.active h3::after {
+            transform: rotate(180deg);
+            color: var(--accent-glow);
+        }
+
+        .badge-rank {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.25rem;
+            background: rgba(var(--accent-glow-rgb), 0.15);
+            color: var(--accent-glow);
+            border: 1px solid rgba(var(--accent-glow-rgb), 0.3);
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        /* Collapsible Stats Section */
+        .player-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .player-card.active .player-details {
+            max-height: 350px;
+            margin-top: 1rem;
+            border-top: 1px dashed var(--glass-border);
+            padding-top: 1rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            text-transform: capitalize;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .player-uuid {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 0.4rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .status-msg {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            padding: 3rem 0;
+            grid-column: 1 / -1;
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--glass-border);
+            padding: 2rem 0;
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .sorting-controls {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Fluid Background Shapes -->
+    <div class="liquid-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <!-- 1. NAVIGATION -->
+    <header class="header glass-panel">
+        <div class="nav-container">
+            <div class="logo">NSW <span>SMP</span></div>
+            <div class="controls">
+                <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀️ Light Mode</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. MAIN GLASS DASHBOARD PANEL -->
+    <main class="main-dashboard glass-panel">
+        <div class="dashboard-header">
+            <div class="title-area">
+                <h2>Active Lobby</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Real-time survival multiplayer status.</p>
+            </div>
+            
+            <div class="sorting-controls">
+                <label for="sort-select">Sort By:</label>
+                <select id="sort-select" class="sort-select" onchange="renderPlayers()">
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="uuid">UUID</option>
+                </select>
+
+                <div class="timer-banner">
+                    Refresh in: <span id="timer-count">--</span>s
+                </div>
+            </div>
+        </div>
+
+        <!-- Render Target Grid -->
+        <div class="grid" id="player-grid">
+            <div class="status-msg">Loading SMP Lobby data...</div>
+        </div>
+    </main>
+
+    <!-- 3. FOOTER -->
+    <footer class="footer glass-panel">
+        <div class="container">
+            <p>&copy; 2026 NSW SMP Liquid Glass Stats Arena. Track live dynamics seamlessly.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Set your relative API path here if needed. 
+        // If your template injects "var backendData = {...}" directly into the script, it will bypass this fetch completely!
+        const API_PATH = "https://hong-reached-encoding-committees.trycloudflare.com/players"; 
+
+        let currentPlayers = [];
+        let refreshInSec = 20;
+
+        // Smart Initializer: Checks global scope OR fetches
+        async function initDashboard() {
+            // 1. If 'backendData' already exists globally, use it directly!
+            if (typeof backendData !== 'undefined' && backendData !== null) {
+                console.log("Using globally injected backendData.");
+                useLoadedData(backendData);
+                return;
+            }
+
+            // 2. Otherwise, fall back to fetching from the API path
+            try {
+                const response = await fetch(API_PATH);
+                if (!response.ok) throw new Error("Fetch failed");
+                const data = await response.json();
+                useLoadedData(data);
+            } catch (err) {
+                console.warn("Could not find global variable or fetch local API. Using fallback rendering.");
+                // Ultimate local fallback so the layout never breaks visually during development
+                useLoadedData({
+                    "players": [
+                        {"uuid":"d07f0e0d-c2d3-435e-bd56-5a95209cd4a5","name":"Typhoon_JuniorYT","stats":{"rank":"UNRANKED","kills":20,"deaths":5}},
+                        {"uuid":"c69efb71-976b-4197-8959-78fd85a7ba0f","name":"TheMaskedBoi","stats":{"rank":"UNRANKED","kills":5,"deaths":12}}
+                    ],
+                    "refresh_in": 20
+                });
+            }
+        }
+
+        // Apply state data to dashboard
+        function useLoadedData(data) {
+            currentPlayers = data.players || [];
+            refreshInSec = data.refresh_in !== undefined ? data.refresh_in : 20;
+
+            renderPlayers();
+            startCountdown(refreshInSec);
+        }
+
+        // Render Cards with strict element checking
+        function renderPlayers() {
+            const gridElement = document.getElementById('player-grid');
+            const sortVal = document.getElementById('sort-select').value;
+            
+            let sortedPlayers = [...currentPlayers];
+
+            if (sortVal === "name-asc") {
+                sortedPlayers.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+            } else if (sortVal === "name-desc") {
+                sortedPlayers.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
+            } else if (sortVal === "uuid") {
+                sortedPlayers.sort((a, b) => (a.uuid || "").localeCompare(b.uuid || ""));
+            }
+
+            gridElement.innerHTML = '';
+
+            if (sortedPlayers.length === 0) {
+                gridElement.innerHTML = `<div class="status-msg">No active players inside the lobby.</div>`;
+                return;
+            }
+
+            sortedPlayers.forEach(player => {
+                if (!player) return;
+
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.setAttribute('onclick', 'toggleCard(this)');
+                
+                const statsObj = player.stats || {};
+                const displayRank = statsObj.rank || "UNRANKED";
+
+                // Generate key-values dynamically from API stats payload
+                let statsHtml = '';
+                Object.entries(statsObj).forEach(([key, val]) => {
+                    if (key.toLowerCase() === 'rank') return; // Badge-rendered already
+                    statsHtml += `
+                        <div class="detail-row">
+                            <span class="detail-label">${key.replace(/_/g, ' ')}</span>
+                            <span class="detail-value">${val !== null && val !== undefined ? val : 'N/A'}</span>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="badge-rank">${displayRank}</div>
+                    <h3>${player.name || "Unknown Player"}</h3>
+                    <div class="player-details">
+                        ${statsHtml || '<div class="detail-row"><span class="detail-label">No statistics recorded</span></div>'}
+                        <div class="player-uuid">UUID: ${player.uuid || "N/A"}</div>
+                    </div>
+                `;
+                gridElement.appendChild(card);
+            });
+        }
+
+        // Accordion functionality
+        function toggleCard(cardElement) {
+            const isActive = cardElement.classList.contains('active');
+            
+            document.querySelectorAll('.player-card').forEach(card => {
+                card.classList.remove('active');
+            });
+
+            if (!isActive) {
+                cardElement.classList.add('active');
+            }
+        }
+
+        // Dynamic Countdown sequence (Refresh Time + 1)
+        let countdownInterval;
+        function startCountdown(baseSeconds) {
+            let timerVal = baseSeconds + 1;
+            const countdownText = document.getElementById('timer-count');
+            
+            countdownText.textContent = timerVal;
+
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            countdownInterval = setInterval(() => {
+                timerVal--;
+                countdownText.textContent = timerVal;
+                
+                if (timerVal <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.reload(); 
+                }
+            }, 1000);
+        }
+
+        // Theme Mode Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeBtn = document.getElementById('theme-btn');
+            
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                themeBtn.textContent = "🌙 Dark Mode";
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                themeBtn.textContent = "☀️ Light Mode";
+            }
+        }
+
+        // Fire Initialization
+        initDashboard();
+    </script>
+</body>
+</html>
