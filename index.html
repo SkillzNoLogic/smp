@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NSW SMP - Liquid Glass Dashboard</title>
+    <title>NSW SMP</title>
     <style>
         /* Modern Reset & Liquid Glass Variables */
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+            --bg-size: 400% 400%;
+            --bg-animation: gradientShift 15s ease infinite;
+            --bg-gradient: linear-gradient(-45deg, #0f172a, #020617, #1e1b4b, #0f172a);
             --blob-1: #4f46e5;
             --blob-2: #06b6d4;
             --glass-bg: rgba(15, 23, 42, 0.45);
@@ -24,7 +26,7 @@
         }
 
         [data-theme="light"] {
-            --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+            --bg-gradient: linear-gradient(-45deg, #f1f5f9, #cbd5e1, #e2e8f0, #f8fafc);
             --blob-1: #6366f1;
             --blob-2: #0ea5e9;
             --glass-bg: rgba(255, 255, 255, 0.4);
@@ -48,12 +50,20 @@
             font-family: var(--font-main);
             color: var(--text-primary);
             background: var(--bg-gradient);
+            background-size: var(--bg-size);
+            animation: var(--bg-animation);
             min-height: 100vh;
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             position: relative;
+        }
+
+        /* Ambient Background Gradient Shift Animation */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         /* Moving Background Liquid Blobs */
@@ -369,16 +379,6 @@
             grid-column: 1 / -1;
         }
 
-        /* Footer */
-        .footer {
-            border-top: 1px solid var(--glass-border);
-            padding: 2rem 0;
-            margin-top: auto;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
         @media (max-width: 768px) {
             .dashboard-header {
                 flex-direction: column;
@@ -436,16 +436,7 @@
         </div>
     </main>
 
-    <!-- 3. FOOTER -->
-    <footer class="footer glass-panel">
-        <div class="container">
-            <p>&copy; 2026 NSW SMP Liquid Glass Stats Arena. Track live dynamics seamlessly.</p>
-        </div>
-    </footer>
-
     <script>
-        // Set your relative API path here if needed. 
-        // If your template injects "var backendData = {...}" directly into the script, it will bypass this fetch completely!
         const API_PATH = "https://heard-exterior-happy-product.trycloudflare.com/players"; 
 
         let currentPlayers = [];
@@ -453,14 +444,12 @@
 
         // Smart Initializer: Checks global scope OR fetches
         async function initDashboard() {
-            // 1. If 'backendData' already exists globally, use it directly!
             if (typeof backendData !== 'undefined' && backendData !== null) {
                 console.log("Using globally injected backendData.");
                 useLoadedData(backendData);
                 return;
             }
 
-            // 2. Otherwise, fall back to fetching from the API path
             try {
                 const response = await fetch(API_PATH);
                 if (!response.ok) throw new Error("Fetch failed");
@@ -468,7 +457,6 @@
                 useLoadedData(data);
             } catch (err) {
                 console.warn("Could not find global variable or fetch local API. Using fallback rendering.");
-                // Ultimate local fallback so the layout never breaks visually during development
                 useLoadedData({
                     "players": [
                         {"uuid":"d07f0e0d-c2d3-435e-bd56-5a95209cd4a5","name":"Typhoon_JuniorYT","stats":{"rank":"UNRANKED","kills":20,"deaths":5}},
@@ -505,14 +493,14 @@
 
             gridElement.innerHTML = '';
 
-            if (sortedPlayers.length === 0) {
+            const visiblePlayers = sortedPlayers.filter(p => p && p.name !== "Skillz_No_Logic_");
+
+            if (visiblePlayers.length === 0) {
                 gridElement.innerHTML = `<div class="status-msg">No active players inside the lobby.</div>`;
                 return;
             }
 
-            sortedPlayers.forEach(player => {
-                if (!player) return;
-
+            visiblePlayers.forEach(player => {
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.setAttribute('onclick', 'toggleCard(this)');
@@ -520,10 +508,9 @@
                 const statsObj = player.stats || {};
                 const displayRank = statsObj.rank || "UNRANKED";
 
-                // Generate key-values dynamically from API stats payload
                 let statsHtml = '';
                 Object.entries(statsObj).forEach(([key, val]) => {
-                    if (key.toLowerCase() === 'rank') return; // Badge-rendered already
+                    if (key.toLowerCase() === 'rank') return;
                     statsHtml += `
                         <div class="detail-row">
                             <span class="detail-label">${key.replace(/_/g, ' ')}</span>
@@ -557,7 +544,7 @@
             }
         }
 
-        // Dynamic Countdown sequence (Refresh Time + 1)
+        // Dynamic Countdown sequence
         let countdownInterval;
         function startCountdown(baseSeconds) {
             let timerVal = baseSeconds + 1;
@@ -592,7 +579,6 @@
             }
         }
 
-        // Fire Initialization
         initDashboard();
     </script>
 </body>
