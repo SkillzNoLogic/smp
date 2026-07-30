@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ranked + Infuse Smp Leadboard</title>
+    <title>Player Stats Dashboard</title>
     <style>
         :root {
             --bg-color: #05070c;
@@ -30,6 +30,7 @@
         .container {
             width: 100%;
             max-width: 600px;
+            position: relative;
         }
 
         header {
@@ -39,6 +40,13 @@
             margin-bottom: 2rem;
             border-bottom: 1px solid var(--tile-border);
             padding-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
         h1 {
@@ -58,13 +66,90 @@
             font-family: monospace;
         }
 
+        .settings-btn {
+            background: none;
+            border: 1px solid var(--tile-border);
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            background-color: var(--tile-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .settings-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .config-panel {
+            display: none;
+            background-color: var(--tile-bg);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(56, 189, 248, 0.1);
+        }
+
+        .config-panel.show {
+            display: block;
+        }
+
+        .config-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent);
+        }
+
+        .config-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .config-input {
+            flex: 1;
+            background-color: var(--stat-bg);
+            border: 1px solid var(--tile-border);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            color: #ffffff;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .config-save-btn {
+            background-color: var(--accent);
+            color: #000000;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .config-save-btn:hover {
+            opacity: 0.9;
+        }
+
         #player-list {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
 
-        /* Player Tile */
         .player-tile {
             background-color: var(--tile-bg);
             border: 1px solid var(--tile-border);
@@ -83,11 +168,27 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* Header row inside tile */
         .player-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .player-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Pixel rendering setup for Minotar avatar */
+        .player-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background-color: var(--stat-bg);
+            border: 1px solid var(--tile-border);
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
 
         .player-name {
@@ -96,7 +197,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Liquid Glass Rank Style */
         .rank-badge {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px) saturate(180%);
@@ -112,14 +212,12 @@
                         inset 0 1px 1px rgba(255, 255, 255, 0.1);
         }
 
-        /* Dynamic Rank Colors injected into liquid glass styling */
         .rank-badge.unranked { color: #94a3b8; text-shadow: 0 0 10px rgba(148, 163, 184, 0.5); }
         .rank-badge.bronze { color: #d97706; text-shadow: 0 0 10px rgba(217, 119, 6, 0.5); }
         .rank-badge.silver { color: #cbd5e1; text-shadow: 0 0 10px rgba(203, 213, 225, 0.5); }
         .rank-badge.gold { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
         .rank-badge.diamond { color: #06b6d4; text-shadow: 0 0 10px rgba(6, 182, 212, 0.5); }
 
-        /* Expandable Stats Panel */
         .player-details {
             max-height: 0;
             overflow: hidden;
@@ -130,7 +228,7 @@
         }
 
         .player-tile.expanded .player-details {
-            max-height: 300px; 
+            max-height: 500px; 
             opacity: 1;
             border-top: 1px solid var(--tile-border);
             padding-top: 1rem;
@@ -150,6 +248,10 @@
             border: 1px solid var(--tile-border);
         }
 
+        .stat-item.full-width {
+            grid-column: span 2;
+        }
+
         .stat-label {
             color: var(--text-muted);
             font-size: 0.725rem;
@@ -162,14 +264,6 @@
         .stat-value {
             font-weight: 600;
             color: #ffffff;
-        }
-
-        .uuid-string {
-            grid-column: span 2;
-            font-family: monospace;
-            font-size: 0.725rem;
-            word-break: break-all;
-            color: #475569;
         }
 
         .error-message {
@@ -187,8 +281,21 @@
     <div class="container">
         <header>
             <h1>Leaderboard</h1>
-            <div id="refresh-timer">Initializing...</div>
+            <div class="header-controls">
+                <div id="refresh-timer">00:00</div>
+                <button class="settings-btn" id="toggle-config-btn" title="Change API URL">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+            </div>
         </header>
+
+        <div class="config-panel" id="config-panel">
+            <div class="config-title">Change Data Target Path</div>
+            <div class="config-row">
+                <input type="text" class="config-input" id="api-url-input" placeholder="Enter endpoint URL...">
+                <button class="config-save-btn" id="save-config-btn">Update</button>
+            </div>
+        </div>
 
         <main id="player-list">
             <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Loading live player telemetry...</div>
@@ -196,14 +303,45 @@
     </div>
 
     <script>
-        const API_URL = 'https://edmonton-types-omissions-switched.trycloudflare.com/players';
+        const DEFAULT_API = 'https://edmonton-types-omissions-switched.trycloudflare.com/players';
+        let activeApiUrl = localStorage.getItem('custom_api_url') || DEFAULT_API;
+
         let countdownInterval = null;
         let timeRemaining = 0;
         let expandedPlayers = new Set();
 
+        const configPanel = document.getElementById('config-panel');
+        const toggleConfigBtn = document.getElementById('toggle-config-btn');
+        const apiUrlInput = document.getElementById('api-url-input');
+        const saveConfigBtn = document.getElementById('save-config-btn');
+
+        apiUrlInput.value = activeApiUrl;
+
+        toggleConfigBtn.addEventListener('click', () => {
+            configPanel.classList.toggle('show');
+        });
+
+        saveConfigBtn.addEventListener('click', () => {
+            const newUrl = apiUrlInput.value.trim();
+            if (newUrl) {
+                activeApiUrl = newUrl;
+                localStorage.setItem('custom_api_url', newUrl);
+                configPanel.classList.remove('show');
+                
+                clearInterval(countdownInterval);
+                document.getElementById('player-list').innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Connecting to new endpoint...</div>`;
+                fetchPlayerData();
+            }
+        });
+
+        function cleanString(str) {
+            if (!str) return '';
+            return str.replace(/<[^>]*>/g, '');
+        }
+
         async function fetchPlayerData() {
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(activeApiUrl);
                 if (!response.ok) throw new Error('Network response failure');
                 
                 const data = await response.json();
@@ -214,21 +352,20 @@
                 console.error('Error fetching data:', error);
                 document.getElementById('player-list').innerHTML = `
                     <div class="error-message">
-                        Failed to load data. Retrying shortly...
+                        Failed to load data from current endpoint.<br>
+                        <span style="font-size:0.75rem; font-family:monospace; color:#ef4444">${activeApiUrl}</span>
                     </div>
                 `;
-                startTimeCountdown(10);
+                startTimeCountdown(5); 
             }
         }
 
         function renderPlayers(players) {
             const container = document.getElementById('player-list');
-            
             if (!players || players.length === 0) {
                 container.innerHTML = '<div style="text-align: center; color: var(--text-muted);">No players active.</div>';
                 return;
             }
-
             container.innerHTML = ''; 
 
             players.forEach(player => {
@@ -239,13 +376,33 @@
                 const rawTime = parseFloat(stats['time played']) || 0;
                 const formattedTime = (rawTime / 1200).toFixed(2);
 
+                // Minotar fallback path: Prefers UUID if valid, cleanly handles player name otherwise.
+                // Uses the "helm" endpoint to include skin overlay layers (hair/hats).
+                const identityToken = (player.uuid && player.uuid.length > 10) ? player.uuid.trim() : (player.name || 'MHF_Steve');
+                const avatarUrl = `https://minotar.net/helm/${identityToken}/32.png`;
+
+                let effectsHtml = '';
+                Object.keys(stats).forEach(key => {
+                    if (key.toLowerCase().startsWith('effect ')) {
+                        effectsHtml += `
+                            <div class="stat-item full-width">
+                                <span class="stat-label">${key}</span>
+                                <span class="stat-value">${cleanString(stats[key])}</span>
+                            </div>
+                        `;
+                    }
+                });
+
                 const tile = document.createElement('div');
                 tile.className = `player-tile ${isExpanded ? 'expanded' : ''}`;
                 tile.setAttribute('data-uuid', player.uuid);
                 
                 tile.innerHTML = `
                     <div class="player-header">
-                        <span class="player-name">${player.name || 'Unknown'}</span>
+                        <div class="player-profile">
+                            <img src="${avatarUrl}" class="player-avatar" alt="${player.name || 'Player'}" onerror="this.onerror=null; this.src='https://minotar.net/helm/MHF_Steve/32.png';">
+                            <span class="player-name">${player.name || 'Unknown'}</span>
+                        </div>
                         <span class="rank-badge ${rankClass}">${stats.rank || 'UNRANKED'}</span>
                     </div>
                     <div class="player-details">
@@ -259,17 +416,14 @@
                                 <span class="stat-value">${stats.deaths ?? 0}</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-label">Time Played Minutes</span>
+                                <span class="stat-label">Time Value</span>
                                 <span class="stat-value">${formattedTime}</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-label">K/D Ratio</span>
                                 <span class="stat-value">${calculateKD(stats.kills, stats.deaths)}</span>
                             </div>
-                            <div class="stat-item uuid-string">
-                                <span class="stat-label">Player UUID</span>
-                                <span>${player.uuid}</span>
-                            </div>
+                            ${effectsHtml}
                         </div>
                     </div>
                 `;
