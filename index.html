@@ -13,6 +13,7 @@
             --text-main: #f1f5f9;
             --text-muted: #64748b;
             --accent: #38bdf8;
+            --gold-accent: #fbbf24;
         }
 
         body {
@@ -168,6 +169,15 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
+        .player-tile.owner-tile {
+            border-color: rgba(251, 191, 36, 0.4);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.05);
+        }
+        .player-tile.owner-tile:hover {
+            border-color: var(--gold-accent);
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.15);
+        }
+
         .player-header {
             display: flex;
             justify-content: space-between;
@@ -180,7 +190,6 @@
             gap: 0.75rem;
         }
 
-        /* Pixel rendering setup for Minotar avatar */
         .player-avatar {
             width: 32px;
             height: 32px;
@@ -197,6 +206,12 @@
             letter-spacing: 0.5px;
         }
 
+        .badge-container {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
         .rank-badge {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px) saturate(180%);
@@ -210,6 +225,20 @@
             text-transform: uppercase;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), 
                         inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .owner-badge {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: var(--gold-accent);
+            text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.1);
         }
 
         .rank-badge.unranked { color: #94a3b8; text-shadow: 0 0 10px rgba(148, 163, 184, 0.5); }
@@ -306,6 +335,9 @@
         const DEFAULT_API = 'https://edmonton-types-omissions-switched.trycloudflare.com/players';
         let activeApiUrl = localStorage.getItem('custom_api_url') || DEFAULT_API;
 
+        const OWNER_UUID = "2205c335-c33d-48a3-b811-3a9859fbc09c";
+        const OWNER_NAME = "Skillz_No_Logic_";
+
         let countdownInterval = null;
         let timeRemaining = 0;
         let expandedPlayers = new Set();
@@ -370,15 +402,18 @@
 
             players.forEach(player => {
                 const stats = player.stats || {};
-                const rankClass = (stats.rank || 'unranked').toLowerCase();
+                const rawRank = stats.rank || 'UNRANKED';
+                const rankClass = rawRank.toLowerCase();
                 const isExpanded = expandedPlayers.has(player.uuid);
 
                 const rawTime = parseFloat(stats['time played']) || 0;
                 const formattedTime = (rawTime / 1200).toFixed(2);
 
-                // Minotar fallback path: Prefers UUID if valid, cleanly handles player name otherwise.
-                // Uses the "helm" endpoint to include skin overlay layers (hair/hats).
-                const identityToken = (player.uuid && player.uuid.length > 10) ? player.uuid.trim() : (player.name || 'MHF_Steve');
+                const isOwner = (player.uuid === OWNER_UUID);
+                
+                const displayName = isOwner ? OWNER_NAME : (player.name || 'Unknown');
+                const identityToken = isOwner ? OWNER_UUID : ((player.uuid && player.uuid.length > 10) ? player.uuid.trim() : (player.name || 'MHF_Steve'));
+                
                 const avatarUrl = `https://minotar.net/helm/${identityToken}/32.png`;
 
                 let effectsHtml = '';
@@ -393,17 +428,31 @@
                     }
                 });
 
+                // Badge configuration step: Strips unranked for you, but retains it for others.
+                let badgeMarkup = '';
+                if (isOwner) {
+                    badgeMarkup += `<span class="owner-badge">Server OWNER</span>`;
+                    // Only show a secondary rank badge if you aren't unranked
+                    if (rawRank.toUpperCase() !== 'UNRANKED') {
+                        badgeMarkup += `<span class="rank-badge ${rankClass}">${rawRank}</span>`;
+                    }
+                } else {
+                    badgeMarkup += `<span class="rank-badge ${rankClass}">${rawRank}</span>`;
+                }
+
                 const tile = document.createElement('div');
-                tile.className = `player-tile ${isExpanded ? 'expanded' : ''}`;
+                tile.className = `player-tile ${isExpanded ? 'expanded' : ''} ${isOwner ? 'owner-tile' : ''}`;
                 tile.setAttribute('data-uuid', player.uuid);
                 
                 tile.innerHTML = `
                     <div class="player-header">
                         <div class="player-profile">
-                            <img src="${avatarUrl}" class="player-avatar" alt="${player.name || 'Player'}" onerror="this.onerror=null; this.src='https://minotar.net/helm/MHF_Steve/32.png';">
-                            <span class="player-name">${player.name || 'Unknown'}</span>
+                            <img src="${avatarUrl}" class="player-avatar" alt="${displayName}" onerror="this.onerror=null; this.src='https://minotar.net/helm/MHF_Steve/32.png';">
+                            <span class="player-name">${displayName}</span>
                         </div>
-                        <span class="rank-badge ${rankClass}">${stats.rank || 'UNRANKED'}</span>
+                        <div class="badge-container">
+                            ${badgeMarkup}
+                        </div>
                     </div>
                     <div class="player-details">
                         <div class="stats-grid">
